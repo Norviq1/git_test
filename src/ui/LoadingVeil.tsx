@@ -6,9 +6,15 @@ import { useStore } from '@/store/useStore'
 export function LoadingVeil() {
   const ready = useStore((s) => s.sceneReady)
   const webglOk = useStore((s) => s.webglOk)
-  const { progress, active } = useProgress()
+  const { progress } = useProgress()
   const [gone, setGone] = useState(false)
-  const done = (ready && !active) || !webglOk
+  const [timedOut, setTimedOut] = useState(false)
+  // textures stream in behind the veil; never block the explorer on them
+  const done = ready || !webglOk || timedOut
+  useEffect(() => {
+    const t = setTimeout(() => setTimedOut(true), 9000)
+    return () => clearTimeout(t)
+  }, [])
   useEffect(() => {
     if (!done) return
     const t = setTimeout(() => setGone(true), 900)

@@ -26,17 +26,18 @@ export function TravelHud() {
   const focus = useStore((s) => s.focusId)
   const travelling = useStore((s) => s.travelling)
   const prev = useRef<string | null>(null)
-  const [info, setInfo] = useState<{ to: string; km: number } | null>(null)
+  const [info, setInfo] = useState<{ from: string; to: string; km: number } | null>(null)
 
   useEffect(() => {
-    if (focus && focus !== prev.current) setInfo({ to: focus, km: realDistanceKm(prev.current, focus) })
+    if (focus && focus !== prev.current) setInfo({ from: prev.current ?? 'sun', to: focus, km: realDistanceKm(prev.current, focus) })
     prev.current = focus
   }, [focus])
 
   if (!travelling || !info || !focus) return null
   const body = BODY_MAP[info.to]
+  const shifted = useStore.getState().selectedId && window.innerWidth >= 1024
   return (
-    <div className="pointer-events-none fixed left-1/2 top-[76px] z-20 -translate-x-1/2 animate-fade-up">
+    <div className={`pointer-events-none fixed left-1/2 top-[76px] z-20 -translate-x-1/2 animate-fade-up ${shifted ? 'lg:-ml-[200px]' : ''}`}>
       <div className="glass flex items-center gap-4 rounded-full px-5 py-2.5">
         <span className="relative flex h-2 w-2">
           <span className="absolute inset-0 animate-ping rounded-full bg-cyan-400/70" />
@@ -45,7 +46,7 @@ export function TravelHud() {
         <span className="text-[13px] text-ink-50">En route to <span className="font-display" style={{ color: body.accent }}>{body.name}</span></span>
         {info.km > 0 && (
           <span className="hidden font-mono text-[11px] text-ink-400 sm:inline">
-            {fmtKm(info.km)} · light takes {fmtLightTime(info.km).replace('light-', '')}
+            {fmtKm(info.km)} from {BODY_MAP[info.from].name} · light takes {fmtLightTime(info.km).replace('light-', '')}
           </span>
         )}
       </div>

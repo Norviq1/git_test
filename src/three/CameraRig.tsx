@@ -122,7 +122,8 @@ export function CameraRig() {
     const st = useStore.getState()
 
     if (tr.active) {
-      tr.t = Math.min(1, tr.t + dt / tr.dur)
+      // use (lightly capped) real time so slow devices don't stretch the journey
+      tr.t = Math.min(1, tr.t + Math.min(rawDt, 0.25) / tr.dur)
       const e = easeInOut(tr.t)
       const e2 = easeOut(Math.min(1, tr.t * 1.25))
       c.target.lerpVectors(tr.fromTarget, P, e2)

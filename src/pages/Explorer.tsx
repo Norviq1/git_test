@@ -12,6 +12,7 @@ import { TravelHud } from '@/ui/explorer/TravelHud'
 import { FactToast } from '@/ui/explorer/FactToast'
 import { TravelMenu } from '@/ui/explorer/TravelMenu'
 import { IconHome } from '@/ui/icons'
+import { ExplorerUnavailable } from '@/ui/Fallback'
 
 function useIsDesktop() {
   const [d, setD] = useState(() => window.matchMedia('(min-width: 1024px)').matches)
@@ -35,6 +36,7 @@ export default function Explorer() {
   const setCinematic = useStore((s) => s.setCinematic)
   const setViewShift = useStore((s) => s.setViewShift)
   const desktop = useIsDesktop()
+  const webglOk = useStore((s) => s.webglOk)
 
   useEffect(() => {
     setCinematic(false)
@@ -69,12 +71,14 @@ export default function Explorer() {
     navigate('/explore')
   }
 
+  if (!webglOk) return <ExplorerUnavailable />
+
   return (
     <>
       <LabelLayer />
       <TravelHud />
       {scaleMode === 'true' && (
-        <div className="pointer-events-none fixed left-1/2 top-[124px] z-10 w-[min(92vw,520px)] -translate-x-1/2 text-center lg:top-[76px]">
+        <div className="pointer-events-none fixed left-1/2 top-[124px] z-10 w-[min(92vw,520px)] -translate-x-1/2 text-center">
           <p className="hud !text-flare-300/90">True scale · sizes & distances to one scale · planets are specks — use labels or search</p>
         </div>
       )}
@@ -102,10 +106,12 @@ export default function Explorer() {
           <ObjectRail onPick={pick} />
         </div>
         <div className="flex items-end gap-2 lg:justify-center">
-          <div className="hidden flex-col items-start gap-2 lg:absolute lg:bottom-4 lg:left-4 lg:flex">
+          <div className="hidden lg:absolute lg:bottom-4 lg:left-4 lg:block">
+            <ViewPanel placement="up" />
+          </div>
+          <div className="hidden flex-col items-start gap-2 lg:absolute lg:bottom-[92px] lg:left-[196px] lg:flex">
             <FactToast />
             <OrbitInspector />
-            <ViewPanel placement="up" />
           </div>
           <div className="min-w-0 flex-1 lg:flex-none"><TimeDock /></div>
           <div className={`hidden lg:absolute lg:bottom-4 lg:block ${selectedId ? 'lg:right-[424px]' : 'lg:right-4'}`}>

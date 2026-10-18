@@ -176,11 +176,12 @@ void main(){
     // Io: sulfur plains with volcanic centres
     float n = fbm(q * 2.5, 6);
     col = mix(uC1, uC2, smoothstep(-0.5, 0.6, n));
-    vec2 w = worley(q * 7.0);
-    float vent = smoothstep(0.14, 0.03, w.x) * step(0.45, w.y);
-    float halo = smoothstep(0.35, 0.1, w.x) * step(0.45, w.y);
-    col = mix(col, uC3, halo * 0.55);
-    col = mix(col, uC4, vent);
+    vec2 w = worley(q * 6.0 + fbm(q * 9.0, 3) * 0.35);
+    float live = step(0.55, w.y);
+    float vent = smoothstep(0.05 + 0.07 * fract(w.y * 9.1), 0.0, w.x) * live;
+    float halo = smoothstep(0.42, 0.08, w.x + fbm(q * 14.0, 3) * 0.12) * live;
+    col = mix(col, uC3, halo * 0.45);
+    col = mix(col, uC4, vent * 0.9);
     col = mix(col, vec3(0.55, 0.5, 0.45), smoothstep(0.75, 1.0, abs(p.y)) * 0.5);
     h = 0.5 + n * 0.12 - vent * 0.15;
   }

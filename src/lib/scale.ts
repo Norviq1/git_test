@@ -31,7 +31,9 @@ export function moonDistanceScale(moon: Body, parent: Body, mode: ScaleMode) {
   if (mode === 'true') return dKm * TRUE_KM
   const pr = radiusScale(parent, mode)
   const ratio = dKm / (parent.equatorialRadiusKm ?? parent.radiusKm)
-  return pr * (1.35 + 0.62 * Math.pow(ratio, 0.42)) + radiusScale(moon, mode) * 1.5
+  // Earth's Moon is unusually far out for its planet; tighten it so it doesn't cross Venus's or Mars's orbit
+  const k = parent.id === 'earth' ? 0.78 : 1
+  return (pr * (1.35 + 0.62 * Math.pow(ratio, 0.42)) + radiusScale(moon, mode) * 1.5) * k
 }
 
 /** Map a heliocentric AU vector into scene units (in place), preserving direction. */

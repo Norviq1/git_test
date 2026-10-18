@@ -28,7 +28,7 @@ export const RECIPES: Record<string, RenderRecipe> = {
     atmosphere: { color: '#5fb2ff', intensity: 1.35, thickness: 0.035 },
     roughness: 0.85,
   },
-  moon: { textures: { map: '/textures/moon_1024.jpg', bumpFromMap: 1.2 }, roughness: 1 },
+  moon: { textures: { map: '/textures/moon_1024.jpg', bumpFromMap: 0.35 }, roughness: 1 },
   mars: { surface: { kind: 'mars', colors: ['#b5532c', '#d7804a', '#5f2f1d', '#f2ece4'], params: [0.945, 0, 0, 0], seed: 3.7, bump: 1.1 }, atmosphere: { color: '#ff9e72', intensity: 0.45, thickness: 0.025 }, roughness: 0.97 },
   phobos: { surface: { kind: 'cratered', colors: ['#5a514a', '#776c62', '#8c8277', '#000000'], params: [3.0, 0.4, 0, 0], seed: 5.2, bump: 1.4 }, lumpy: 0.22 },
   deimos: { surface: { kind: 'cratered', colors: ['#6e655b', '#8a8075', '#a0968a', '#000000'], params: [2.0, 0.3, 0, 0], seed: 6.4, bump: 0.8 }, lumpy: 0.16 },

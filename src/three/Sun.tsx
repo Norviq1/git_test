@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
-import { AdditiveBlending, Group, Mesh, PlaneGeometry, ShaderMaterial, SphereGeometry } from 'three'
+import { AdditiveBlending, BufferAttribute, BufferGeometry, Group, Mesh, PlaneGeometry, Points, ShaderMaterial, SphereGeometry } from 'three'
 import { NOISE_GLSL } from './shaders/noise'
 import { sceneRadius } from '@/store/sim'
 import { useStore } from '@/store/useStore'
@@ -108,6 +108,31 @@ void main(){
 }
 `
 
+/** Screen-space glare so the Sun stays visible as a bright star from the far edge of true scale. */
+const GLARE_VERT = /* glsl */ `
+uniform float uSize;
+#include <common>
+#include <logdepthbuf_pars_vertex>
+void main(){
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  gl_PointSize = uSize;
+  #include <logdepthbuf_vertex>
+}
+`
+const GLARE_FRAG = /* glsl */ `
+#include <logdepthbuf_pars_fragment>
+void main(){
+  #include <logdepthbuf_fragment>
+  vec2 c = gl_PointCoord * 2.0 - 1.0;
+  float d = length(c);
+  float g = exp(-d * 5.0) * 1.6 + exp(-d * 14.0) * 3.0;
+  float rays = pow(max(0.0, 1.0 - abs(c.x * c.y) * 60.0), 6.0) * (1.0 - d) * 0.6;
+  gl_FragColor = vec4(vec3(1.0, 0.82, 0.55) * (g + rays), 1.0);
+}
+`
+const glareGeo = new BufferGeometry()
+glareGeo.setAttribute('position', new BufferAttribute(new Float32Array([0, 0, 0]), 3))
+
 const sunGeo = new SphereGeometry(1, 96, 64)
 const quad = new PlaneGeometry(2, 2)
 
@@ -133,8 +158,33 @@ export function Sun() {
     [],
   )
 
+  const glare = useMemo(() => {
+    const p = new Points(
+      glareGeo,
+      new ShaderMaterial({
+        vertexShader: GLARE_VERT,
+        fragmentShader: GLARE_FRAG,
+        uniforms: { uSize: { value: 40 } },
+        transparent: true,
+        depthWrite: false,
+        blending: AdditiveBlending,
+        toneMapped: false,
+      }),
+    )
+    p.frustumCulled = false
+    p.raycast = () => null
+    p.renderOrder = 6
+    return p
+  }, [])
+
   useFrame((state) => {
     const r = sceneRadius.sun ?? 6
+    // fade the glare out once the real disk is large on screen
+    const dist = state.camera.position.length()
+    const px = (r / Math.max(dist * Math.tan((45 * Math.PI) / 360), 1e-6)) * (state.size.height / 2)
+    const m = glare.material as ShaderMaterial
+    m.uniforms.uSize.value = Math.max(0, 46 - px * 3) * Math.min(state.viewport.dpr, 2)
+    glare.visible = px < 14
     const t = state.clock.elapsedTime
     surface.current.scale.setScalar(r)
     surface.current.rotation.y = spin.sun ?? 0
@@ -167,6 +217,7 @@ export function Sun() {
           document.body.style.cursor = ''
         }}
       />
+      <primitive object={glare} />
       <mesh ref={corona} geometry={quad} material={coronaMat} frustumCulled={false} raycast={() => null} renderOrder={5} />
       <pointLight position={[0, 0, 0]} intensity={3.2} decay={0} distance={0} color="#fff4e6" />
     </group>

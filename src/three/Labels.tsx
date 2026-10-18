@@ -11,7 +11,20 @@ import { moonDistanceScale } from '@/lib/scale'
 export const labelEls: Record<string, { root: HTMLElement; detail: HTMLElement } | undefined> = {}
 
 const v = new Vector3()
+const pv = new Vector3()
 let tick = 0
+
+/** True when a moon sits behind its parent's disk as seen from the camera. */
+function occluded(parentId: string, x: number, y: number, dist: number, cam: PerspectiveCamera, size: { width: number; height: number }, tanHalf: number) {
+  const pp = positions[parentId]
+  const pd = cam.position.distanceTo(pp)
+  if (dist <= pd) return false
+  pv.copy(pp).project(cam)
+  const px = ((pv.x + 1) / 2) * size.width
+  const py = ((1 - pv.y) / 2) * size.height
+  const pr = ((sceneRadius[parentId] ?? 0) / Math.max(pd * tanHalf, 1e-9)) * (size.height / 2)
+  return Math.hypot(x - px, y - py) < pr
+}
 
 export function LabelUpdater() {
   useFrame(({ camera, size }) => {
@@ -43,6 +56,11 @@ export function LabelUpdater() {
       const x = ((v.x + 1) / 2) * size.width
       const y = ((1 - v.y) / 2) * size.height
       const rPx = ((sceneRadius[b.id] ?? 0) / Math.max(dist * tanHalf, 1e-9)) * (size.height / 2)
+      if (b.parent && occluded(b.parent, x, y, dist, cam, size, tanHalf)) {
+        el.root.style.opacity = '0'
+        el.root.dataset.v = '0'
+        continue
+      }
       const off = Math.min(rPx, size.height) + 10
       el.root.style.transform = `translate3d(${x.toFixed(1)}px, ${(y + off).toFixed(1)}px, 0) translateX(-50%)`
       const active = st.selectedId === b.id || st.hoveredId === b.id
