@@ -1,13 +1,16 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, MemoryRouter } from 'react-router-dom'
 import App from './App'
 import './index.css'
 
+// Embedded/static hosts that can't serve client-side routes build with VITE_ROUTER=memory
+const Router = import.meta.env.VITE_ROUTER === 'memory' ? MemoryRouter : BrowserRouter
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <App />
-    </BrowserRouter>
+    </Router>
   </React.StrictMode>,
 )
